@@ -1,4 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/user_model.dart';
 
 class DatabaseService {
   DatabaseService._();
@@ -7,6 +9,9 @@ class DatabaseService {
 
   static CollectionReference<Map<String, dynamic>> get _usersCollection =>
       _firestore.collection('users');
+
+  static CollectionReference<Map<String, dynamic>> get _listingsCollection =>
+      _firestore.collection('listings');
 
   static Future<void> createUserDocument({
     required String uid,
@@ -36,5 +41,71 @@ class DatabaseService {
   static Future<bool> isUserEmailVerified(String uid) async {
     final user = await getUserDocument(uid);
     return user?['isEmailVerified'] == true;
+  }
+
+  /// Update user profile
+  static Future<void> updateUserProfile({
+    required String uid,
+    String? name,
+    String? phone,
+    String? companyName,
+    String? address,
+  }) async {
+    final updates = <String, dynamic>{};
+    if (name != null) updates['name'] = name;
+    if (phone != null) updates['phone'] = phone;
+    if (companyName != null) updates['companyName'] = companyName;
+    if (address != null) updates['address'] = address;
+    updates['updatedAt'] = FieldValue.serverTimestamp();
+
+    await _usersCollection.doc(uid).update(updates);
+  }
+
+  /// Mark email as verified
+  static Future<void> markEmailVerified(String uid) async {
+    await _usersCollection.doc(uid).update({
+      'isEmailVerified': true,
+      'emailVerifiedAt': FieldValue.serverTimestamp(),
+    });
+  }
+
+  /// Add to favorites
+  static Future<void> addToFavorites(String uid, String listingId) async {
+    await _usersCollection.doc(uid).update({
+      'favoriteIds': FieldValue.arrayUnion([listingId]),
+    });
+  }
+
+  /// Remove from favorites
+  static Future<void> removeFromFavorites(String uid, String listingId) async {
+    await _usersCollection.doc(uid).update({
+      'favoriteIds': FieldValue.arrayRemove([listingId]),
+    });
+  }
+
+  /// Check if listing is favorited
+  static Future<bool> isFavorite(String uid, String listingId) async {
+    final user = await getUserDocument(uid);
+    final favorites = (user?['favoriteIds'] as List<dynamic>?)?.cast<String>() ?? [];
+    return favorites.contains(listingId);
+  }
+
+  /// Get favorite listings
+  static Future<List<Map<String, dynamic>>> getFavoriteListings(String uid) async {
+    final user = await getUserDocument(uid);
+    final favorites = (user?['favoriteIds'] as List<dynamic>?)?.cast<String>() ?? [];
+    
+    if (favorites.isEmpty) return [];
+    
+    final futures = favorites.map((id) => _listingsCollection.doc(id).get());
+    final snapshots = await Future.wait(futures);
+    return snapshots.map((s) => s.data()).whereType<Map<String, dynamic>>().toList();
+  }
+
+  /// Increment view count
+  static Future<void> incrementViewCount(String listingId) async {
+    await _listingsCollection.doc(listingId).update({
+      'viewCount': FieldValue.increment(1),
+    });
   }
 }
