@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:el_moza3/Constants.dart';
-import 'package:el_moza3/services/admin_service.dart';
 import 'package:el_moza3/services/listing_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
+import 'package:el_moza3/services/auth_service.dart';
 
 class AddServiceScreen extends StatefulWidget {
   const AddServiceScreen({super.key});
@@ -15,66 +16,69 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
   final _descCtrl = TextEditingController();
   final _priceCtrl = TextEditingController();
   final _phoneCtrl = TextEditingController();
-  String _category = "Ø®Ø¯Ù…Ø§Øª Ù…Ù‡Ù†ÙŠØ©";
-  String _type = "Ø¹Ø±Ø¶ Ø®Ø¯Ù…Ø©";
-  String _location = "Ø§Ù„Ù‚Ø§Ù‡Ø±Ø©";
+  String _category = "خدمات مهنية";
+  String _type = "عرض خدمة";
+  String _location = "القاهرة";
   bool _loading = false;
 
   static const List<String> _categories = [
-    "Ø®Ø¯Ù…Ø§Øª Ù…Ù‡Ù†ÙŠØ©",
-    "ØµÙ†Ø§Ø¹Ø© ÙˆØªØµÙ†ÙŠØ¹",
-    "Ù…Ù‚Ø§ÙˆÙ„Ø§Øª",
-    "Ù†Ù‚Ù„ ÙˆÙ„ÙˆØ¬Ø³ØªÙŠØ§Øª",
+    "خدمات مهنية",
+    "صناعة وتصنيع",
+    "مقاولات",
+    "نقل ولوجستيات",
   ];
   static const List<String> _locations = [
-    "Ø§Ù„Ù‚Ø§Ù‡Ø±Ø©",
-    "Ø§Ù„Ø¥Ø³ÙƒÙ†Ø¯Ø±ÙŠØ©",
-    "Ø§Ù„Ø¬ÙŠØ²Ø©",
-    "Ø§Ù„Ù‚Ø§Ù‡Ø±Ø© Ø§Ù„Ø¬Ø¯ÙŠØ¯Ø©",
-    "Ø§Ù„Ø¹Ø§Ø´Ø± Ù…Ù† Ø±Ù…Ø¶Ø§Ù†",
-    "Ø§Ù„Ø³Ø§Ø¯Ø³ Ù…Ù† Ø£ÙƒØªÙˆØ¨Ø±",
-    "Ø´Ø¨Ø±Ø§ Ø§Ù„Ø®ÙŠÙ…Ø©",
+    "القاهرة",
+    "الإسكندرية",
+    "الجيزة",
+    "القليوبية",
+    "الشرقية",
+    "الساحل الشمالي",
+    "شبرا الخيمة",
   ];
 
-  void _submit() async {
-    final ok = await AdminService.requireAdmin(context);
-    if (!ok) return;
-
+  Future<void> _submit() async {
     if (_titleCtrl.text.isEmpty || _descCtrl.text.isEmpty) {
-      ScaffoldMessenger.of(
+      ErrorHandler.showErrorDialog(
         context,
-      ).showSnackBar(
-        const SnackBar(content: Text("Ù…Ù† ÙØ¶Ù„Ùƒ Ø§ÙƒÙ…Ù„ Ø§Ù„Ø¨ÙŠØ§Ù†Ø§Øª")),
+        message: 'يرجى إكمال جميع الحقول المطلوبة',
       );
       return;
     }
+
     setState(() => _loading = true);
-    final err = await ListingService.addListing(
-      title: _titleCtrl.text.trim(),
-      description: _descCtrl.text.trim(),
-      category: _category,
-      type: _type,
-      price: _priceCtrl.text.trim().isEmpty
-          ? "ÙŠÙØ­Ø¯Ø¯ Ù„Ø§Ø­Ù‚Ø§Ù‹"
-          : _priceCtrl.text.trim(),
-      location: _location,
-      phone: _phoneCtrl.text.trim(),
-    );
-    if (!mounted) return;
-    setState(() => _loading = false);
-    if (err != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(err)));
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("ØªÙ… Ù†Ø´Ø± Ø§Ù„Ø¥Ø¹Ù„Ø§Ù† âœ“"),
-          backgroundColor: Colors.green,
-        ),
+
+    try {
+      final err = await ListingService.addListing(
+        title: _titleCtrl.text.trim(),
+        description: _descCtrl.text.trim(),
+        category: _category,
+        type: _type,
+        price: _priceCtrl.text.trim().isEmpty
+            ? "يحدد لاحقاً"
+            : _priceCtrl.text.trim(),
+        location: _location,
+        phone: _phoneCtrl.text.trim(),
       );
-      _titleCtrl.clear();
-      _descCtrl.clear();
-      _priceCtrl.clear();
-      _phoneCtrl.clear();
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      if (err != null) {
+        ErrorHandler.showErrorDialog(context, message: err);
+      } else {
+        ErrorHandler.showSuccessDialog(
+          context,
+          message: 'تم نشر الإعلان بنجاح',
+        );
+        _titleCtrl.clear();
+        _descCtrl.clear();
+        _priceCtrl.clear();
+        _phoneCtrl.clear();
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ErrorHandler.handleException(context, e);
     }
   }
 
@@ -89,7 +93,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                "Ø¥Ø¶Ø§ÙØ© Ø¥Ø¹Ù„Ø§Ù†",
+                "إضافة خدمة",
                 style: TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
@@ -98,13 +102,13 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
               ),
               const SizedBox(height: 4),
               const Text(
-                "Ø§Ù†Ø´Ø± Ø®Ø¯Ù…ØªÙƒ Ø£Ùˆ Ø§Ø·Ù„Ø¨ Ù…Ø§ ØªØ­ØªØ§Ø¬Ù‡",
+                "انشر خدمتك أو منتجك",
                 style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
               ),
               const SizedBox(height: 20),
-              _section("Ù†ÙˆØ¹ Ø§Ù„Ø¥Ø¹Ù„Ø§Ù†"),
+              _section("نوع الخدمة"),
               Row(
-                children: ["Ø¹Ø±Ø¶ Ø®Ø¯Ù…Ø©", "Ø·Ù„Ø¨ Ø®Ø¯Ù…Ø©"].map((t) {
+                children: ["عرض خدمة", "طلب خدمة"].map((t) {
                   final sel = _type == t;
                   return Expanded(
                     child: GestureDetector(
@@ -115,9 +119,7 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         decoration: BoxDecoration(
                           color: sel ? AppColors.primary : Colors.white,
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.borderRadius,
-                          ),
+                          borderRadius: BorderRadius.circular(AppSizes.borderRadius),
                           border: Border.all(
                             color: sel ? AppColors.primary : AppColors.border,
                           ),
@@ -137,30 +139,30 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                 }).toList(),
               ),
               const SizedBox(height: 20),
-              _section("Ø§Ù„ØªØµÙ†ÙŠÙ"),
+              _section("التصنيف"),
               _dropdown(
                 _categories,
                 _category,
                 (v) => setState(() => _category = v!),
               ),
               const SizedBox(height: 16),
-              _section("Ø¹Ù†ÙˆØ§Ù† Ø§Ù„Ø¥Ø¹Ù„Ø§Ù†"),
-              _field(_titleCtrl, "Ù…Ø«Ø§Ù„: Ù…ÙƒØªØ¨ Ù…Ø­Ø§Ø³Ø¨Ø© Ù…Ø¹ØªÙ…Ø¯"),
+              _section("عنوان الخدمة"),
+              _field(_titleCtrl, "مثال: شركة تصميم هندسي"),
               const SizedBox(height: 16),
-              _section("ÙˆØµÙ Ø§Ù„Ø®Ø¯Ù…Ø©"),
-              _field(_descCtrl, "Ø§ÙƒØªØ¨ ØªÙØ§ØµÙŠÙ„ Ø§Ù„Ø®Ø¯Ù…Ø©...", maxLines: 4),
+              _section("وصف الخدمة"),
+              _field(_descCtrl, "اكتب تفاصيل الخدمة...", maxLines: 4),
               const SizedBox(height: 16),
-              _section("Ø§Ù„Ø³Ø¹Ø± (Ø§Ø®ØªÙŠØ§Ø±ÙŠ)"),
-              _field(_priceCtrl, "Ù…Ø«Ø§Ù„: 500 Ø¬/Ø³Ø§Ø¹Ø© Ø£Ùˆ ØªÙØ§ÙˆØ¶"),
+              _section("السعر (اختياري)"),
+              _field(_priceCtrl, "مثال: 500 ج.م. أو اتصل بنا"),
               const SizedBox(height: 16),
-              _section("Ø§Ù„Ù…ÙˆÙ‚Ø¹"),
+              _section("الموقع"),
               _dropdown(
                 _locations,
                 _location,
                 (v) => setState(() => _location = v!),
               ),
               const SizedBox(height: 16),
-              _section("Ø±Ù‚Ù… Ø§Ù„ØªÙˆØ§ØµÙ„"),
+              _section("رقم التواصل"),
               _field(_phoneCtrl, "01XXXXXXXXX"),
               const SizedBox(height: 28),
               SizedBox(
@@ -171,15 +173,13 @@ class _AddServiceScreenState extends State<AddServiceScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.borderRadius,
-                      ),
+                      borderRadius: BorderRadius.circular(AppSizes.borderRadius),
                     ),
                   ),
                   child: _loading
                       ? const CircularProgressIndicator(color: Colors.white)
                       : const Text(
-                          "Ù†Ø´Ø± Ø§Ù„Ø¥Ø¹Ù„Ø§Ù†",
+                          "نشر الخدمة",
                           style: TextStyle(fontSize: 16, color: Colors.white),
                         ),
                 ),

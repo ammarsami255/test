@@ -1,4 +1,5 @@
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 
 import 'database_service.dart';
 import 'otp_service.dart';
@@ -32,6 +33,7 @@ class AuthService {
   AuthService._();
 
   static final FirebaseAuth _auth = FirebaseAuth.instance;
+  static final GoogleSignIn _googleSignIn = GoogleSignIn();
   static final RegExp _emailRegex = RegExp(
     r'^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$',
     caseSensitive: false,
@@ -41,6 +43,81 @@ class AuthService {
   static bool get isLoggedIn => _auth.currentUser != null;
 
   static Stream<User?> get authStateChanges => _auth.authStateChanges();
+
+  /// Sign in with Google
+  static Future<AuthResult> signInWithGoogle() async {
+    try {
+      // Trigger the Google Sign In flow
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      
+      if (googleUser == null) {
+        return AuthResult.failure('Google sign-in was cancelled.');
+      }
+
+      // Obtain the auth details from the request
+      final GoogleSignInAuthentication googleAuth = 
+          await googleUser.authentication;
+
+      // Create a new credential
+      final OAuthCredential credential = GoogleAuthProvider.credential(
+        accessToken: googleAuth.accessToken,
+        idToken: googleAuth.idToken,
+      );
+
+      // Sign in to Firebase with the Google credential
+      final UserCredential userCredential = 
+          await _auth.signInWithCredential(credential);
+
+      final user = userCredential.user;
+      if (user == null) {
+        return AuthResult.failure('Failed to sign in with Google.');
+      }
+
+      // Check if user document exists, create if not
+      final existingUser = await DatabaseService.getUserDocument(user.uid);
+      if (existingUser == null) {
+        await DatabaseService.createUserDocument(
+          uid: user.uid,
+          name: user.displayName ?? user.email?.split('@').first ?? 'User',
+          email: user.email ?? '',
+        );
+      }
+
+      return AuthResult.success();
+    } on FirebaseAuthException catch (e) {
+      return AuthResult.failure(_mapError(e.code));
+    } catch (e) {
+      return AuthResult.failure('Failed to sign in with Google. Please try again.');
+    }
+  }
+
+  /// Sign in anonymously
+  static Future<AuthResult> signInAnonymously() async {
+    try {
+      final UserCredential credential = await _auth.signInAnonymously();
+      final user = credential.user;
+      
+      if (user == null) {
+        return AuthResult.failure('Failed to sign in anonymously.');
+      }
+
+      // Create user document for anonymous users
+      final existingUser = await DatabaseService.getUserDocument(user.uid);
+      if (existingUser == null) {
+        await DatabaseService.createUserDocument(
+          uid: user.uid,
+          name: 'Guest',
+          email: '',
+        );
+      }
+
+      return AuthResult.success();
+    } on FirebaseAuthException catch (e) {
+      return AuthResult.failure(_mapError(e.code));
+    } catch (e) {
+      return AuthResult.failure('Failed to sign in anonymously. Please try again.');
+    }
+  }
 
   static Future<AuthResult> register({
     required String name,

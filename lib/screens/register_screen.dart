@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:el_moza3/Constants.dart';
 import 'package:el_moza3/screens/otp_verification_screen.dart';
 import 'package:el_moza3/services/auth_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -48,7 +49,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     if (password != confirmPassword) {
-      setState(() => _error = 'Passwords do not match.');
+      setState(() => _error = 'كلمتا المرور غير متطابقتين');
       return;
     }
 
@@ -57,32 +58,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _error = null;
     });
 
-    final result = await AuthService.register(
-      name: name,
-      email: email,
-      password: password,
-    );
-
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    if (!result.isSuccess) {
-      setState(() => _error = result.errorMessage);
-      return;
-    }
-
-    if (result.infoMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.infoMessage!)),
+    try {
+      final result = await AuthService.register(
+        name: name,
+        email: email,
+        password: password,
       );
-    }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OtpVerificationScreen(email: email),
-      ),
-    );
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      if (!result.isSuccess) {
+        setState(() => _error = result.errorMessage);
+        return;
+      }
+
+      if (result.infoMessage != null) {
+        ErrorHandler.showInfoDialog(
+          context,
+          message: result.infoMessage!,
+          title: 'Note',
+        );
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpVerificationScreen(email: email),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ErrorHandler.handleException(context, e);
+    }
   }
 
   @override

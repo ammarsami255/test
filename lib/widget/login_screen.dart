@@ -6,6 +6,7 @@ import 'package:el_moza3/screens/main_screen.dart';
 import 'package:el_moza3/screens/otp_verification_screen.dart';
 import 'package:el_moza3/screens/register_screen.dart';
 import 'package:el_moza3/services/auth_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
 import 'package:el_moza3/utils/responsive_utils.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -22,6 +23,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
+  bool _googleLoading = false;
   String? _error;
 
   Future<void> _login() async {
@@ -45,27 +47,59 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
 
-    final result = await AuthService.login(email: email, password: password);
+    try {
+      final result = await AuthService.login(email: email, password: password);
 
-    if (!mounted) return;
-    setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() => _loading = false);
 
-    if (!result.isSuccess) {
-      setState(() => _error = result.errorMessage);
-      return;
+      if (!result.isSuccess) {
+        // Use ErrorHandler to show the error
+        ErrorHandler.showErrorDialog(context, message: result.errorMessage ?? 'Login failed');
+        return;
+      }
+
+      if (result.requiresOtp) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpVerificationScreen(email: email),
+          ),
+        );
+        return;
+      }
+
+      Navigator.pushReplacementNamed(context, MainScreen.id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ErrorHandler.handleException(context, e);
     }
+  }
 
-    if (result.requiresOtp) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OtpVerificationScreen(email: email),
-        ),
-      );
-      return;
+  Future<void> _signInWithGoogle() async {
+    setState(() {
+      _googleLoading = true;
+      _error = null;
+    });
+
+    try {
+      final result = await AuthService.signInWithGoogle();
+
+      if (!mounted) return;
+      setState(() => _googleLoading = false);
+
+      if (!result.isSuccess) {
+        ErrorHandler.showErrorDialog(context, message: result.errorMessage ?? 'Google sign-in failed');
+        return;
+      }
+
+      Navigator.pushReplacementNamed(context, MainScreen.id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _googleLoading = false);
+      ErrorHandler.handleException(context, e);
     }
-
-    Navigator.pushReplacementNamed(context, MainScreen.id);
   }
 
   @override
@@ -263,6 +297,33 @@ class _LoginScreenState extends State<LoginScreen> {
                       color: Colors.white,
                     ),
                   ),
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Google Sign-In Button
+        SizedBox(
+          width: double.infinity,
+          height: AppSizes.buttonHeight,
+          child: OutlinedButton.icon(
+            onPressed: _googleLoading ? null : _signInWithGoogle,
+            icon: _googleLoading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.g_mobiledata, size: 28),
+            label: Text(
+              _googleLoading ? 'جاري...' : 'تسجيل عبر Google',
+              style: const TextStyle(fontSize: 16),
+            ),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.textPrimary,
+              side: const BorderSide(color: AppColors.border),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 10),

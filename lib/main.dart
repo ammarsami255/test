@@ -8,6 +8,7 @@ import 'package:el_moza3/screens/main_screen.dart';
 import 'package:el_moza3/screens/otp_verification_screen.dart';
 import 'package:el_moza3/screens/register_screen.dart';
 import 'package:el_moza3/widget/login_screen.dart';
+import 'package:el_moza3/services/error_handler.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,6 +22,7 @@ class ElMoza3App extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      navigatorKey: navigatorKey, // Global key for ErrorHandler
       debugShowCheckedModeBanner: false,
       title: 'الموزّع',
       theme: ThemeData(
