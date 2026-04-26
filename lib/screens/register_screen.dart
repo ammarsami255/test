@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:el_moza3/Constants.dart';
 import 'package:el_moza3/screens/otp_verification_screen.dart';
 import 'package:el_moza3/services/auth_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
+import 'package:el_moza3/utils/responsive_utils.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -48,7 +50,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     }
 
     if (password != confirmPassword) {
-      setState(() => _error = 'Passwords do not match.');
+      setState(() => _error = 'كلمتا المرور غير متطابقتين');
       return;
     }
 
@@ -57,32 +59,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _error = null;
     });
 
-    final result = await AuthService.register(
-      name: name,
-      email: email,
-      password: password,
-    );
-
-    if (!mounted) return;
-    setState(() => _loading = false);
-
-    if (!result.isSuccess) {
-      setState(() => _error = result.errorMessage);
-      return;
-    }
-
-    if (result.infoMessage != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(result.infoMessage!)),
+    try {
+      final result = await AuthService.register(
+        name: name,
+        email: email,
+        password: password,
       );
-    }
 
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (_) => OtpVerificationScreen(email: email),
-      ),
-    );
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      if (!result.isSuccess) {
+        setState(() => _error = result.errorMessage);
+        return;
+      }
+
+      if (result.infoMessage != null) {
+        ErrorHandler.showInfoDialog(
+          context,
+          message: result.infoMessage!,
+          title: 'Note',
+        );
+      }
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(
+          builder: (_) => OtpVerificationScreen(email: email),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ErrorHandler.handleException(context, e);
+    }
   }
 
   @override
@@ -119,64 +129,76 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            _field(_nameCtrl, "الاسم الكامل", Icons.person_outline),
-            const SizedBox(height: 14),
-            _field(_emailCtrl, "البريد الإلكتروني", Icons.email_outlined),
-            const SizedBox(height: 14),
-            _field(_phoneCtrl, "رقم الموبايل", Icons.phone_outlined),
-            const SizedBox(height: 14),
-            _field(
-              _passCtrl,
-              "كلمة المرور",
-              Icons.lock_outline,
-              obscure: _obscure,
-              suffix: IconButton(
-                icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
-                onPressed: () => setState(() => _obscure = !_obscure),
-              ),
-            ),
-            const SizedBox(height: 14),
-            _field(
-              _confirmCtrl,
-              "تأكيد كلمة المرور",
-              Icons.lock_outline,
-              obscure: _obscure,
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _error!,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              height: AppSizes.buttonHeight,
-              child: ElevatedButton(
-                onPressed: _loading ? null : _register,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  ),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          final isDesktop = constraints.maxWidth >= ResponsiveUtils.tabletBreakpoint;
+          return Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.all(ResponsiveUtils.getPadding(context)),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(
+                  maxWidth: isDesktop ? 450 : double.infinity,
                 ),
-                child: _loading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        "إنشاء الحساب",
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    _field(_nameCtrl, "الاسم الكامل", Icons.person_outline),
+                    const SizedBox(height: 14),
+                    _field(_emailCtrl, "البريد الإلكتروني", Icons.email_outlined),
+                    const SizedBox(height: 14),
+                    _field(_phoneCtrl, "رقم الموبايل", Icons.phone_outlined),
+                    const SizedBox(height: 14),
+                    _field(
+                      _passCtrl,
+                      "كلمة المرور",
+                      Icons.lock_outline,
+                      obscure: _obscure,
+                      suffix: IconButton(
+                        icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => setState(() => _obscure = !_obscure),
                       ),
+                    ),
+                    const SizedBox(height: 14),
+                    _field(
+                      _confirmCtrl,
+                      "تأكيد كلمة المرور",
+                      Icons.lock_outline,
+                      obscure: _obscure,
+                    ),
+                    if (_error != null) ...[
+                      const SizedBox(height: 12),
+                      Text(
+                        _error!,
+                        style: const TextStyle(color: Colors.red, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                    const SizedBox(height: 28),
+                    SizedBox(
+                      width: double.infinity,
+                      height: AppSizes.buttonHeight,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          ),
+                        ),
+                        child: _loading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text(
+                                "إنشاء الحساب",
+                                style: TextStyle(fontSize: 16, color: Colors.white),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }

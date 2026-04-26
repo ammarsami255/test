@@ -6,6 +6,7 @@ import 'package:el_moza3/screens/main_screen.dart';
 import 'package:el_moza3/screens/otp_verification_screen.dart';
 import 'package:el_moza3/screens/register_screen.dart';
 import 'package:el_moza3/services/auth_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
 import 'package:el_moza3/utils/responsive_utils.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -45,27 +46,33 @@ class _LoginScreenState extends State<LoginScreen> {
       _error = null;
     });
 
-    final result = await AuthService.login(email: email, password: password);
+    try {
+      final result = await AuthService.login(email: email, password: password);
 
-    if (!mounted) return;
-    setState(() => _loading = false);
+      if (!mounted) return;
+      setState(() => _loading = false);
 
-    if (!result.isSuccess) {
-      setState(() => _error = result.errorMessage);
-      return;
+      if (!result.isSuccess) {
+        setState(() => _error = result.errorMessage);
+        return;
+      }
+
+      if (result.requiresOtp) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (_) => OtpVerificationScreen(email: email),
+          ),
+        );
+        return;
+      }
+
+      Navigator.pushReplacementNamed(context, MainScreen.id);
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ErrorHandler.handleException(context, e);
     }
-
-    if (result.requiresOtp) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => OtpVerificationScreen(email: email),
-        ),
-      );
-      return;
-    }
-
-    Navigator.pushReplacementNamed(context, MainScreen.id);
   }
 
   @override

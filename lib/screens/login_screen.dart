@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:el_moza3/Constants.dart';
 import 'package:el_moza3/services/auth_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
 import 'package:el_moza3/screens/register_screen.dart';
 import 'package:el_moza3/screens/forgot_password_screen.dart';
 import 'package:el_moza3/utils/responsive_utils.dart';
@@ -21,21 +22,30 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _loading = false;
   String? _error;
 
-  void _login() async {
+  Future<void> _login() async {
     setState(() {
       _loading = true;
       _error = null;
     });
-    final err = await AuthService.login(
-      email: _emailCtrl.text.trim(),
-      password: _passCtrl.text,
-    );
-    if (!mounted) return;
-    setState(() => _loading = false);
-    if (err != null) {
-      setState(() => _error = err);
-    } else {
-      Navigator.pop(context);
+
+    try {
+      final result = await AuthService.login(
+        email: _emailCtrl.text.trim(),
+        password: _passCtrl.text,
+      );
+      
+      if (!mounted) return;
+      setState(() => _loading = false);
+      
+      if (result.isSuccess) {
+        Navigator.pop(context);
+      } else {
+        setState(() => _error = result.errorMessage);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ErrorHandler.handleException(context, e);
     }
   }
 
