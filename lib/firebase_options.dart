@@ -41,48 +41,46 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyDzue5MMgTkByXfyEXtl2JQVEb2Cof-91A',
-    appId: '1:160158651929:web:329ad16b5177b1066cfc88',
-    messagingSenderId: '160158651929',
-    projectId: 'el-moza3',
-    authDomain: 'el-moza3.firebaseapp.com',
-    storageBucket: 'el-moza3.firebasestorage.app',
-    measurementId: 'G-0EVF1QP5RZ',
+    apiKey: 'AIzaSyAVOARvZbdnBMJo--jRrVeHOsTbofYmPzQ',
+    appId: '1:517360489384:web:8a36a7a27f327e55b7839d',
+    messagingSenderId: '517360489384',
+    projectId: 'el-moza3-52945',
+    authDomain: 'el-moza3-52945.firebaseapp.com',
+    storageBucket: 'el-moza3-52945.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyDFzZktWSA38In5-H7Us0IJxe1vTYxaXkI',
-    appId: '1:160158651929:android:90e06770ead0aaff6cfc88',
-    messagingSenderId: '160158651929',
-    projectId: 'el-moza3',
-    storageBucket: 'el-moza3.firebasestorage.app',
+    apiKey: 'AIzaSyAVOARvZbdnBMJo--jRrVeHOsTbofYmPzQ',
+    appId: '1:517360489384:android:8a36a7a27f327e55b7839d',
+    messagingSenderId: '517360489384',
+    projectId: 'el-moza3-52945',
+    storageBucket: 'el-moza3-52945.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyBgKRljWQSz3NFsFImmdfAY0JTFKOY3zBs',
-    appId: '1:160158651929:ios:c59b209d81ea96ec6cfc88',
-    messagingSenderId: '160158651929',
-    projectId: 'el-moza3',
-    storageBucket: 'el-moza3.firebasestorage.app',
+    apiKey: 'AIzaSyAVOARvZbdnBMJo--jRrVeHOsTbofYmPzQ',
+    appId: '1:517360489384:ios:8a36a7a27f327e55b7839d',
+    messagingSenderId: '517360489384',
+    projectId: 'el-moza3-52945',
+    storageBucket: 'el-moza3-52945.firebasestorage.app',
     iosBundleId: 'com.example.elMoza3',
   );
 
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyBgKRljWQSz3NFsFImmdfAY0JTFKOY3zBs',
-    appId: '1:160158651929:ios:c59b209d81ea96ec6cfc88',
-    messagingSenderId: '160158651929',
-    projectId: 'el-moza3',
-    storageBucket: 'el-moza3.firebasestorage.app',
+    apiKey: 'AIzaSyAVOARvZbdnBMJo--jRrVeHOsTbofYmPzQ',
+    appId: '1:517360489384:ios:8a36a7a27f327e55b7839d',
+    messagingSenderId: '517360489384',
+    projectId: 'el-moza3-52945',
+    storageBucket: 'el-moza3-52945.firebasestorage.app',
     iosBundleId: 'com.example.elMoza3',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyDzue5MMgTkByXfyEXtl2JQVEb2Cof-91A',
-    appId: '1:160158651929:web:6b231b2388f0f02e6cfc88',
-    messagingSenderId: '160158651929',
-    projectId: 'el-moza3',
-    authDomain: 'el-moza3.firebaseapp.com',
-    storageBucket: 'el-moza3.firebasestorage.app',
-    measurementId: 'G-7TYWK1V780',
+    apiKey: 'AIzaSyAVOARvZbdnBMJo--jRrVeHOsTbofYmPzQ',
+    appId: '1:517360489384:web:8a36a7a27f327e55b7839d',
+    messagingSenderId: '517360489384',
+    projectId: 'el-moza3-52945',
+    authDomain: 'el-moza3-52945.firebaseapp.com',
+    storageBucket: 'el-moza3-52945.firebasestorage.app',
   );
 }
