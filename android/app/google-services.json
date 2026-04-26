@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "160158651929",
+    "project_id": "el-moza3",
+    "storage_bucket": "el-moza3.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:160158651929:android:90e06770ead0aaff6cfc88",
+        "android_client_info": {
+          "package_name": "com.example.el_moza3"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDFzZktWSA38In5-H7Us0IJxe1vTYxaXkI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
