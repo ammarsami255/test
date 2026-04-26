@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:el_moza3/Constants.dart';
 import 'package:el_moza3/services/auth_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
 
 class ForgotPasswordScreen extends StatefulWidget {
   const ForgotPasswordScreen({super.key});
@@ -13,20 +14,36 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
   final _emailCtrl = TextEditingController();
   bool _loading = false;
   bool _sent = false;
-  String? _error;
 
-  void _send() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    final err = await AuthService.sendPasswordReset(_emailCtrl.text.trim());
-    if (!mounted) return;
-    setState(() {
-      _loading = false;
-      _sent = err == null;
-      _error = err;
-    });
+  Future<void> _send() async {
+    final email = _emailCtrl.text.trim();
+    final emailError = AuthService.validateEmail(email);
+    if (emailError != null) {
+      ErrorHandler.showErrorDialog(context, message: emailError);
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      final err = await AuthService.sendPasswordReset(email);
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      if (err != null) {
+        ErrorHandler.showErrorDialog(context, message: err);
+      } else {
+        setState(() => _sent = true);
+        ErrorHandler.showSuccessDialog(
+          context,
+          message: 'تم إرسال رابط استعادة كلمة المرور إلى بريدك الإلكتروني',
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ErrorHandler.handleException(context, e);
+    }
   }
 
   @override
@@ -117,13 +134,6 @@ class _ForgotPasswordScreenState extends State<ForgotPasswordScreen> {
                   ),
                 ),
               ),
-              if (_error != null) ...[
-                const SizedBox(height: 10),
-                Text(
-                  _error!,
-                  style: const TextStyle(color: Colors.red, fontSize: 13),
-                ),
-              ],
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,

@@ -4,6 +4,7 @@ import 'package:el_moza3/Constants.dart';
 import 'package:el_moza3/screens/main_screen.dart';
 import 'package:el_moza3/services/auth_service.dart';
 import 'package:el_moza3/services/otp_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
 
 class OtpVerificationScreen extends StatefulWidget {
   const OtpVerificationScreen({
@@ -23,19 +24,17 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   final TextEditingController _otpController = TextEditingController();
   bool _submitting = false;
   bool _resending = false;
-  String? _error;
   String? _message;
 
   Future<void> _verify() async {
     final otpError = OtpService.validateOtp(_otpController.text);
     if (otpError != null) {
-      setState(() => _error = otpError);
+      ErrorHandler.showErrorDialog(context, message: otpError);
       return;
     }
 
     setState(() {
       _submitting = true;
-      _error = null;
       _message = null;
     });
 
@@ -48,32 +47,29 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
       );
     } catch (error) {
       if (!mounted) return;
-      setState(() => _error = OtpService.mapError(error));
-    } finally {
-      if (mounted) {
-        setState(() => _submitting = false);
-      }
+      setState(() => _submitting = false);
+      ErrorHandler.handleException(context, error);
     }
   }
 
   Future<void> _resend() async {
     setState(() {
       _resending = true;
-      _error = null;
       _message = null;
     });
 
     try {
       await OtpService.sendOtp(email: widget.email);
       if (!mounted) return;
-      setState(() => _message = 'A new OTP has been sent to ${widget.email}.');
+      setState(() => _resending = false);
+      ErrorHandler.showSuccessDialog(
+        context,
+        message: 'A new OTP has been sent to ${widget.email}.',
+      );
     } catch (error) {
       if (!mounted) return;
-      setState(() => _error = OtpService.mapError(error));
-    } finally {
-      if (mounted) {
-        setState(() => _resending = false);
-      }
+      setState(() => _resending = false);
+      ErrorHandler.handleException(context, error);
     }
   }
 
@@ -185,22 +181,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 ),
               ),
             ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _error!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
-              ),
-            ],
-            if (_message != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _message!,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.green, fontSize: 13),
-              ),
-            ],
             const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,

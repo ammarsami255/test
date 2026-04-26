@@ -24,28 +24,25 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _obscure = true;
   bool _loading = false;
   bool _googleLoading = false;
-  String? _error;
 
   Future<void> _login() async {
     final email = _emailCtrl.text.trim();
     final password = _passCtrl.text;
 
+    // Show validation errors via modal
     final emailError = AuthService.validateEmail(email);
     if (emailError != null) {
-      setState(() => _error = emailError);
+      ErrorHandler.showErrorDialog(context, message: emailError);
       return;
     }
 
     final passwordError = AuthService.validatePassword(password);
     if (passwordError != null) {
-      setState(() => _error = passwordError);
+      ErrorHandler.showErrorDialog(context, message: passwordError);
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() => _loading = true);
 
     try {
       final result = await AuthService.login(email: email, password: password);
@@ -54,8 +51,10 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _loading = false);
 
       if (!result.isSuccess) {
-        // Use ErrorHandler to show the error
-        ErrorHandler.showErrorDialog(context, message: result.errorMessage ?? 'Login failed');
+        ErrorHandler.showErrorDialog(
+          context,
+          message: result.errorMessage ?? 'Login failed',
+        );
         return;
       }
 
@@ -266,14 +265,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            _error!,
-            style: const TextStyle(color: Colors.red, fontSize: 13),
-            textAlign: TextAlign.center,
-          ),
-        ],
         const SizedBox(height: 20),
         SizedBox(
           width: double.infinity,

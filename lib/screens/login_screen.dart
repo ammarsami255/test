@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:el_moza3/Constants.dart';
 import 'package:el_moza3/services/auth_service.dart';
+import 'package:el_moza3/services/error_handler.dart';
 import 'package:el_moza3/screens/register_screen.dart';
 import 'package:el_moza3/screens/forgot_password_screen.dart';
 import 'package:el_moza3/utils/responsive_utils.dart';
@@ -19,23 +20,43 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
-  String? _error;
 
-  void _login() async {
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
-    final err = await AuthService.login(
-      email: _emailCtrl.text.trim(),
-      password: _passCtrl.text,
-    );
-    if (!mounted) return;
-    setState(() => _loading = false);
-    if (err != null) {
-      setState(() => _error = err);
-    } else {
-      Navigator.pop(context);
+  Future<void> _login() async {
+    final email = _emailCtrl.text.trim();
+    final password = _passCtrl.text;
+
+    // Show validation errors via modal
+    final emailError = AuthService.validateEmail(email);
+    if (emailError != null) {
+      ErrorHandler.showErrorDialog(context, message: emailError);
+      return;
+    }
+
+    final passwordError = AuthService.validatePassword(password);
+    if (passwordError != null) {
+      ErrorHandler.showErrorDialog(context, message: passwordError);
+      return;
+    }
+
+    setState(() => _loading = true);
+
+    try {
+      final result = await AuthService.login(email: email, password: password);
+      if (!mounted) return;
+      setState(() => _loading = false);
+
+      if (!result.isSuccess) {
+        ErrorHandler.showErrorDialog(
+          context,
+          message: result.errorMessage ?? 'Login failed',
+        );
+      } else {
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (!mounted) return;
+      setState(() => _loading = false);
+      ErrorHandler.handleException(context, e);
     }
   }
 
@@ -188,14 +209,6 @@ class _LoginScreenState extends State<LoginScreen> {
             ),
           ),
         ),
-        if (_error != null) ...[
-          const SizedBox(height: 8),
-          Text(
-            _error!,
-            style: const TextStyle(color: Colors.red, fontSize: 13),
-            textAlign: TextAlign.center,
-          ),
-        ],
         const SizedBox(height: 20),
         SizedBox(
           width: double.infinity,

@@ -22,7 +22,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _confirmCtrl = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
-  String? _error;
 
   Future<void> _register() async {
     final name = _nameCtrl.text.trim();
@@ -30,33 +29,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final password = _passCtrl.text;
     final confirmPassword = _confirmCtrl.text;
 
+    // Show validation errors via modal
     final nameError = AuthService.validateName(name);
     if (nameError != null) {
-      setState(() => _error = nameError);
+      ErrorHandler.showErrorDialog(context, message: nameError);
       return;
     }
 
     final emailError = AuthService.validateEmail(email);
     if (emailError != null) {
-      setState(() => _error = emailError);
+      ErrorHandler.showErrorDialog(context, message: emailError);
       return;
     }
 
     final passwordError = AuthService.validatePassword(password);
     if (passwordError != null) {
-      setState(() => _error = passwordError);
+      ErrorHandler.showErrorDialog(context, message: passwordError);
       return;
     }
 
     if (password != confirmPassword) {
-      setState(() => _error = 'كلمتا المرور غير متطابقتين');
+      ErrorHandler.showErrorDialog(
+        context,
+        message: 'كلمتا المرور غير متطابقتين',
+      );
       return;
     }
 
-    setState(() {
-      _loading = true;
-      _error = null;
-    });
+    setState(() => _loading = true);
 
     try {
       final result = await AuthService.register(
@@ -69,7 +69,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       setState(() => _loading = false);
 
       if (!result.isSuccess) {
-        setState(() => _error = result.errorMessage);
+        ErrorHandler.showErrorDialog(
+          context,
+          message: result.errorMessage ?? 'Registration failed',
+        );
         return;
       }
 
@@ -128,64 +131,80 @@ class _RegisterScreenState extends State<RegisterScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            _field(_nameCtrl, "الاسم الكامل", Icons.person_outline),
-            const SizedBox(height: 14),
-            _field(_emailCtrl, "البريد الإلكتروني", Icons.email_outlined),
-            const SizedBox(height: 14),
-            _field(_phoneCtrl, "رقم الموبايل", Icons.phone_outlined),
-            const SizedBox(height: 14),
-            _field(
-              _passCtrl,
-              "كلمة المرور",
-              Icons.lock_outline,
-              obscure: _obscure,
-              suffix: IconButton(
-                icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
-                onPressed: () => setState(() => _obscure = !_obscure),
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          // Responsive padding based on screen width
+          final screenWidth = constraints.maxWidth;
+          final isTablet = screenWidth >= 600;
+          final isDesktop = screenWidth >= 900;
+          
+          final horizontalPadding = isDesktop
+              ? 100.0
+              : isTablet
+                  ? 60.0
+                  : 20.0;
+          final maxWidth = isDesktop ? 450.0 : (isTablet ? 400.0 : double.infinity);
+
+          return Center(
+            child: SingleChildScrollView(
+              padding: EdgeInsets.symmetric(
+                horizontal: horizontalPadding,
+                vertical: 20,
               ),
-            ),
-            const SizedBox(height: 14),
-            _field(
-              _confirmCtrl,
-              "تأكيد كلمة المرور",
-              Icons.lock_outline,
-              obscure: _obscure,
-            ),
-            if (_error != null) ...[
-              const SizedBox(height: 12),
-              Text(
-                _error!,
-                style: const TextStyle(color: Colors.red, fontSize: 13),
-                textAlign: TextAlign.center,
-              ),
-            ],
-            const SizedBox(height: 28),
-            SizedBox(
-              width: double.infinity,
-              height: AppSizes.buttonHeight,
-              child: ElevatedButton(
-                onPressed: _loading ? null : _register,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(AppSizes.borderRadius),
-                  ),
-                ),
-                child: _loading
-                    ? const CircularProgressIndicator(color: Colors.white)
-                    : const Text(
-                        "إنشاء الحساب",
-                        style: TextStyle(fontSize: 16, color: Colors.white),
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: maxWidth),
+                child: Column(
+                  children: [
+                    const SizedBox(height: 10),
+                    _field(_nameCtrl, "الاسم الكامل", Icons.person_outline),
+                    const SizedBox(height: 14),
+                    _field(_emailCtrl, "البريد الإلكتروني", Icons.email_outlined),
+                    const SizedBox(height: 14),
+                    _field(_phoneCtrl, "رقم الموبايل", Icons.phone_outlined),
+                    const SizedBox(height: 14),
+                    _field(
+                      _passCtrl,
+                      "كلمة المرور",
+                      Icons.lock_outline,
+                      obscure: _obscure,
+                      suffix: IconButton(
+                        icon: Icon(_obscure ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => setState(() => _obscure = !_obscure),
                       ),
+                    ),
+                    const SizedBox(height: 14),
+                    _field(
+                      _confirmCtrl,
+                      "تأكيد كلمة المرور",
+                      Icons.lock_outline,
+                      obscure: _obscure,
+                    ),
+                    const SizedBox(height: 28),
+                    SizedBox(
+                      width: double.infinity,
+                      height: AppSizes.buttonHeight,
+                      child: ElevatedButton(
+                        onPressed: _loading ? null : _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+                          ),
+                        ),
+                        child: _loading
+                            ? const CircularProgressIndicator(color: Colors.white)
+                            : const Text(
+                                "إنشاء الحساب",
+                                style: TextStyle(fontSize: 16, color: Colors.white),
+                              ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
