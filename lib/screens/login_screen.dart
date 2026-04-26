@@ -3,6 +3,7 @@ import 'package:el_moza3/Constants.dart';
 import 'package:el_moza3/services/auth_service.dart';
 import 'package:el_moza3/screens/register_screen.dart';
 import 'package:el_moza3/screens/forgot_password_screen.dart';
+import 'package:el_moza3/utils/responsive_utils.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,140 +51,199 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
         child: SafeArea(
-          child: Center(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(AppSizes.defaultPadding),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      color: AppColors.primary,
-                      borderRadius: BorderRadius.circular(
-                        AppSizes.borderRadius,
-                      ),
-                    ),
-                    child: const Icon(
-                      Icons.storefront,
-                      color: Colors.white,
-                      size: 40,
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-                  const Text(
-                    "منصة الموزع",
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 6),
-                  const Text(
-                    "سجّل دخولك للمتابعة",
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  _field(
-                    _emailCtrl,
-                    "البريد الإلكتروني",
-                    Icons.email_outlined,
-                    false,
-                  ),
-                  const SizedBox(height: 15),
-                  _field(
-                    _passCtrl,
-                    "كلمة المرور",
-                    Icons.lock_outline,
-                    _obscure,
-                    suffix: IconButton(
-                      icon: Icon(
-                        _obscure ? Icons.visibility : Icons.visibility_off,
-                      ),
-                      onPressed: () => setState(() => _obscure = !_obscure),
-                    ),
-                  ),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: TextButton(
-                      onPressed: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (_) => const ForgotPasswordScreen(),
-                        ),
-                      ),
-                      child: const Text(
-                        "نسيت كلمة المرور؟",
-                        style: TextStyle(color: AppColors.primary),
-                      ),
-                    ),
-                  ),
-                  if (_error != null) ...[
-                    const SizedBox(height: 8),
-                    Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.red, fontSize: 13),
-                      textAlign: TextAlign.center,
-                    ),
-                  ],
-                  const SizedBox(height: 20),
-                  SizedBox(
-                    width: double.infinity,
-                    height: AppSizes.buttonHeight,
-                    child: ElevatedButton(
-                      onPressed: _loading ? null : _login,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(
-                            AppSizes.borderRadius,
-                          ),
-                        ),
-                      ),
-                      child: _loading
-                          ? const CircularProgressIndicator(color: Colors.white)
-                          : const Text(
-                              "تسجيل الدخول",
-                              style: TextStyle(
-                                fontSize: 16,
-                                color: Colors.white,
-                              ),
-                            ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      TextButton(
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const RegisterScreen(),
-                          ),
-                        ),
-                        child: const Text(
-                          "إنشاء حساب",
-                          style: TextStyle(color: AppColors.primary),
-                        ),
-                      ),
-                      const Text(
-                        "ليس لديك حساب؟",
-                        style: TextStyle(color: AppColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ),
+          child: LayoutBuilder(
+            builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth >= ResponsiveUtils.tabletBreakpoint;
+              
+              if (isDesktop) {
+                return _buildDesktopLayout();
+              }
+              return _buildMobileLayout();
+            },
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildMobileLayout() {
+    return Center(
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(ResponsiveUtils.getPadding(context)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildLogo(),
+            const SizedBox(height: 20),
+            const Text(
+              "منصة الموزع",
+              style: TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.bold,
+                color: AppColors.textPrimary,
+              ),
+            ),
+            const SizedBox(height: 6),
+            const Text(
+              "سجّل دخولك للمتابعة",
+              style: TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 40),
+            _buildFormFields(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout() {
+    return Center(
+      child: Container(
+        constraints: const BoxConstraints(maxWidth: 450),
+        padding: const EdgeInsets.all(32),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _buildLogo(),
+              const SizedBox(height: 24),
+              const Text(
+                "منصة الموزع",
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 8),
+              const Text(
+                "سجّل دخولك للمتابعة",
+                style: TextStyle(
+                  fontSize: 15,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 48),
+              _buildFormFields(),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogo() {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: BorderRadius.circular(AppSizes.borderRadius),
+      ),
+      child: const Icon(
+        Icons.storefront,
+        color: Colors.white,
+        size: 40,
+      ),
+    );
+  }
+
+  Widget _buildFormFields() {
+    return Column(
+      children: [
+        _field(
+          _emailCtrl,
+          "البريد الإلكتروني",
+          Icons.email_outlined,
+          false,
+        ),
+        const SizedBox(height: 15),
+        _field(
+          _passCtrl,
+          "كلمة المرور",
+          Icons.lock_outline,
+          _obscure,
+          suffix: IconButton(
+            icon: Icon(
+              _obscure ? Icons.visibility : Icons.visibility_off,
+            ),
+            onPressed: () => setState(() => _obscure = !_obscure),
+          ),
+        ),
+        Align(
+          alignment: Alignment.centerLeft,
+          child: TextButton(
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => const ForgotPasswordScreen(),
+              ),
+            ),
+            child: const Text(
+              "نسيت كلمة المرور؟",
+              style: TextStyle(color: AppColors.primary),
+            ),
+          ),
+        ),
+        if (_error != null) ...[
+          const SizedBox(height: 8),
+          Text(
+            _error!,
+            style: const TextStyle(color: Colors.red, fontSize: 13),
+            textAlign: TextAlign.center,
+          ),
+        ],
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          height: AppSizes.buttonHeight,
+          child: ElevatedButton(
+            onPressed: _loading ? null : _login,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(
+                  AppSizes.borderRadius,
+                ),
+              ),
+            ),
+            child: _loading
+                ? const CircularProgressIndicator(color: Colors.white)
+                : const Text(
+                    "تسجيل الدخول",
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: Colors.white,
+                    ),
+                  ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            TextButton(
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const RegisterScreen(),
+                ),
+              ),
+              child: const Text(
+                "إنشاء حساب",
+                style: TextStyle(color: AppColors.primary),
+              ),
+            ),
+            const Text(
+              "ليس لديك حساب؟",
+              style: TextStyle(color: AppColors.textSecondary),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

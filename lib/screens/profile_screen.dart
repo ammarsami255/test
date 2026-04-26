@@ -14,6 +14,29 @@ class ProfileScreen extends StatelessWidget {
     required this.onRequireLogin,
     required this.hasVerifiedSession,
   });
+void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("تسجيل الخروج"),
+        content: const Text("هل أنت متأكد من تسجيل الخروج؟"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("إلغاء"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              await AuthService.logout();
+            },
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("تسجيل الخروج"),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -303,7 +326,7 @@ class ProfileScreen extends StatelessWidget {
                       Icons.logout_rounded,
                       "تسجيل الخروج",
                       color: Colors.red,
-                      onTap: () async => AuthService.logout(),
+                      onTap: () => _showLogoutDialog(context),
                     ),
                   ],
                 ),
