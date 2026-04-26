@@ -79,7 +79,6 @@ class _LoginScreenState extends State<LoginScreen> {
   Future<void> _signInWithGoogle() async {
     setState(() {
       _googleLoading = true;
-      _error = null;
     });
 
     try {
